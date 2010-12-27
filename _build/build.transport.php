@@ -15,10 +15,11 @@ set_time_limit(0);
 
 /* define sources */
 $root = dirname(dirname(__FILE__)) . '/';
+echo $root;
 $sources= array (
     'root' => $root,
     'build' => $root . '_build/',
-    'lexicon' => $root . '_build/lexicon/',
+    //'lexicon' => $root . '_build/lexicon/',
     'source_core' => $root . 'core/components/loopdbchunk',
 );
 unset($root);
@@ -33,14 +34,14 @@ $modx->setLogTarget(XPDO_CLI_MODE ? 'ECHO' : 'HTML');
 
 /* set package info */
 define('PKG_NAME','loopdbchunk');
-define('PKG_VERSION','1.0');
+define('PKG_VERSION','1.0.12');
 define('PKG_RELEASE','alpha');
 
 /* load builder */
 $modx->loadClass('transport.modPackageBuilder','',false, true);
 $builder = new modPackageBuilder($modx);
 $builder->createPackage(PKG_NAME, PKG_VERSION, PKG_RELEASE);
-//$builder->registerNamespace('loopdbchunk',false,true,'{core_path}components/loopdbchunk/');
+$builder->registerNamespace('loopdbchunk',false,true,'{core_path}components/loopdbchunk/');
 
 /* create snippet object */
 $modx->log(xPDO::LOG_LEVEL_INFO,'Adding in snippet.'); flush();

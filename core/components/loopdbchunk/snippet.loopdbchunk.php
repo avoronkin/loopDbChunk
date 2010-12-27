@@ -1,7 +1,47 @@
 <?php
-
-if(isset($package) and isset($modelPath)) {
-    $modx->addPackage($package,$modx->getOption('core_path').$modelPath); 
+/**
+ * loopDbChun
+ *
+ * packageName -
+ * modelPath -
+ * class -
+ *
+ * TEMPLATES
+ *
+ * tpl - Name of a chunk serving as a row template
+ * [NOTE: if not provided, properties are dumped to output for each row]
+ *
+ * tplOdd - (Opt) Name of a chunk serving as row template for rows with an odd idx value
+ * (see idx property)
+ * tplFirst - (Opt) Name of a chunk serving as row template for the first row (see first
+ * property)
+ * tplLast - (Opt) Name of a chunk serving as row template for the last row (see last
+ * property)
+ * tpl_{n} - (Opt) Name of a chunk serving as row template for the nth row
+ *
+ * SELECTION
+ * where - (Opt) A JSON expression of criteria to build any additional where clauses from. An example would be
+ * &where=`{{"alias:LIKE":"foo%", "OR:alias:LIKE":"%bar"},{"OR:pagetitle:=":"foobar", "AND:description:=":"raboof"}}`
+ *
+ * sortby - (Opt) Field to sort by 
+ * sortdir - (Opt) Order which to sort by [default=DESC]
+ * limit - (Opt) Limits the number of resources returned [default=5]
+ * offset - (Opt) An offset of resources returned by the criteria to skip [default=0]
+ *
+ * OPTIONS
+ *
+ * idx - (Opt) You can define the starting idx of the resources, which is an property that is
+ * incremented as each resource is rendered [default=1]
+ * first - (Opt) Define the idx which represents the first resource (see tplFirst) [default=1]
+ * last - (Opt) Define the idx which represents the last resource (see tplLast) [default=# of
+ * resources being summarized + first - 1]
+ * outputSeparator - (Opt) An optional string to separate each tpl instance [default="\n"]
+ *
+ */
+ 
+ 
+if(isset($packageName) and isset($modelPath)) {
+    $modx->addPackage($packageName,$modx->getOption('core_path').$modelPath); 
 }
 
 if(!isset($class)) return('');
@@ -25,6 +65,11 @@ $modx->setPlaceholder($totalVar, $total);//getPage
 
 if (!empty($sortby)) $criteria->sortby($sortby, $sortdir);
 if (!empty($limit)) $criteria->limit($limit, $offset);
+
+if (!empty($debug)) {
+    $criteria->prepare();
+    $modx->log(modX::LOG_LEVEL_ERROR, $criteria->toSQL());
+}
 
 $collection = $modx->getCollection($class, $criteria);
 
@@ -72,5 +117,11 @@ foreach ($collection as $row) {
     
 }
 
-return implode($outputSeparator, $output);
+$output = implode($outputSeparator, $output);
+$toPlaceholder = $modx->getOption('toPlaceholder',$scriptProperties,false);
+if (!empty($toPlaceholder)) {
+    $modx->setPlaceholder($toPlaceholder,$output);
+    return '';
+}
+return $output;​
 ?>
