@@ -3,7 +3,7 @@
  * loopDbChunk
  *
  * @package loopDbChunk
- * @version 1.0
+ * @version 2.0
  * @release alpha
  * @author Alexander Voronkin <modx@elasticweb.ru>
  */
@@ -19,7 +19,6 @@ echo $root;
 $sources= array (
     'root' => $root,
     'build' => $root . '_build/',
-    //'lexicon' => $root . '_build/lexicon/',
     'source_core' => $root . 'core/components/loopdbchunk',
 );
 unset($root);
@@ -34,7 +33,7 @@ $modx->setLogTarget(XPDO_CLI_MODE ? 'ECHO' : 'HTML');
 
 /* set package info */
 define('PKG_NAME','loopdbchunk');
-define('PKG_VERSION','1.0.12');
+define('PKG_VERSION','2.0');
 define('PKG_RELEASE','alpha');
 
 /* load builder */
@@ -47,7 +46,7 @@ $builder->registerNamespace('loopdbchunk',false,true,'{core_path}components/loop
 $modx->log(xPDO::LOG_LEVEL_INFO,'Adding in snippet.'); flush();
 $snippet= $modx->newObject('modSnippet');
 $snippet->set('name', 'loopDbChunk');
-$snippet->set('description', '<strong>'.PKG_VERSION.'-'.PKG_RELEASE.'</strong> ');
+$snippet->set('description', PKG_VERSION.'-'.PKG_RELEASE);
 $snippet->set('category', 0);
 $snippet->set('snippet', file_get_contents($sources['source_core'] . '/snippet.loopdbchunk.php'));
 $properties = include $sources['build'].'properties.inc.php';

@@ -2,9 +2,9 @@
 /**
  * loopDbChun
  *
- * packageName -
- * modelPath -
- * class -
+ * packageName - The name of the folder that contains the xPDO model package.
+ * modelPath - The path to the xPDO model package folder, relative to the core folder.
+ * class - The xPDO model class  that represents a specific table.
  *
  * TEMPLATES
  *
@@ -23,7 +23,7 @@
  * where - (Opt) A JSON expression of criteria to build any additional where clauses from. An example would be
  * &where=`{{"alias:LIKE":"foo%", "OR:alias:LIKE":"%bar"},{"OR:pagetitle:=":"foobar", "AND:description:=":"raboof"}}`
  *
- * sortby - (Opt) Field to sort by 
+ * sortby - (Opt) Field to sort by
  * sortdir - (Opt) Order which to sort by [default=DESC]
  * limit - (Opt) Limits the number of resources returned [default=5]
  * offset - (Opt) An offset of resources returned by the criteria to skip [default=0]
@@ -38,13 +38,15 @@
  * outputSeparator - (Opt) An optional string to separate each tpl instance [default="\n"]
  *
  */
- 
- 
+
+
 if(isset($packageName) and isset($modelPath)) {
-    $modx->addPackage($packageName,$modx->getOption('core_path').$modelPath); 
+    $modx->addPackage($packageName,$modx->getOption('core_path').$modelPath);
 }
 
-if(!isset($class)) return('');
+if(!isset($class)) {
+    return('');
+}
 $output = array();
 $tpl = !empty($tpl) ? $tpl : ''; 
 $outputSeparator = isset($outputSeparator) ? $outputSeparator : "\n";
@@ -79,21 +81,21 @@ $last = empty($last) ? (count($collection) + $idx - 1) : intval($last);
 
 /* include parseTpl */
 include_once $modx->getOption('loopdbchunk.core_path',null,$modx->getOption('core_path').'components/loopdbchunk/').'include.parsetpl.php';
-  
+
 foreach ($collection as $row) {
     $odd = ($idx & 1);
     $properties = array_merge(
-        $scriptProperties
-        ,array(
+            $scriptProperties
+            ,array(
             'idx' => $idx
             ,'first' => $first
             ,'last' => $last
-        )
-        ,$row->toArray()
+            )
+            ,$row->toArray()
     );
     $rowTpl = '';
     $tplidx = 'tpl_' . $idx;
-    
+
     if (!empty($$tplidx)) $rowTpl = parseTpl($$tplidx, $properties);
     switch ($idx) {
         case $first:
@@ -103,7 +105,7 @@ foreach ($collection as $row) {
             if (!empty($tplLast)) $rowTpl = parseTpl($tplLast, $properties);
             break;
     }
-    
+
     if ($odd && empty($rowTpl) && !empty($tplOdd)) $rowTpl = parseTpl($tplOdd, $properties);
     if (!empty($tpl) && empty($rowTpl)) $rowTpl = parseTpl($tpl, $properties);
     if (empty($rowTpl)) {
@@ -114,7 +116,7 @@ foreach ($collection as $row) {
         $output[]= $rowTpl;
     }
     $idx++;
-    
+
 }
 
 $output = implode($outputSeparator, $output);
@@ -123,5 +125,6 @@ if (!empty($toPlaceholder)) {
     $modx->setPlaceholder($toPlaceholder,$output);
     return '';
 }
-return $output;​
+return $output;
+
 ?>
