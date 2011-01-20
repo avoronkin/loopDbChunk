@@ -7,7 +7,7 @@
  */
 $properties = array(
     array(
-        'name' => 'packageName',
+        'name' => 'package',
         'desc' => 'prop_loopdbchunk.package_name_desc',
         'type' => 'textfield',
         'options' => '',
@@ -15,7 +15,7 @@ $properties = array(
         'lexicon' => 'loopdbchunk:properties',
     ),
     array(
-        'name' => 'modelPath',
+        'name' => 'model',
         'desc' => 'prop_loopdbchunk.model_path_desc',
         'type' => 'textfield',
         'options' => '',
@@ -60,16 +60,16 @@ $properties = array(
         'type' => 'textfield',
         'options' => '',
         'value' => '',
-         'lexicon' => 'loopdbchunk:properties',
+        'lexicon' => 'loopdbchunk:properties',
     ),
-    array(
+  /*  array(
         'name' => 'sortby',
         'desc' => 'prop_loopdbchunk.sortby_desc',
         'type' => 'textfield',
         'options' => '',
         'value' => '',
-         'lexicon' => 'loopdbchunk:properties',
-    ),
+        'lexicon' => 'loopdbchunk:properties',
+    ),*/
     array(
         'name' => 'sortdir',
         'desc' => 'prop_loopdbchunk.sortdir_desc',
@@ -79,7 +79,7 @@ $properties = array(
             array('text' => 'DESC','value' => 'DESC'),
         ),
         'value' => 'DESC',
-         'lexicon' => 'loopdbchunk:properties',
+        'lexicon' => 'loopdbchunk:properties',
     ),
     array(
         'name' => 'limit',
@@ -87,7 +87,7 @@ $properties = array(
         'type' => 'textfield',
         'options' => '',
         'value' => '5',
-         'lexicon' => 'loopdbchunk:properties',
+        'lexicon' => 'loopdbchunk:properties',
     ),
     array(
         'name' => 'offset',
@@ -95,7 +95,7 @@ $properties = array(
         'type' => 'textfield',
         'options' => '',
         'value' => '0',
-         'lexicon' => 'loopdbchunk:properties',
+        'lexicon' => 'loopdbchunk:properties',
     ),
     array(
         'name' => 'idx',
@@ -103,7 +103,7 @@ $properties = array(
         'type' => 'textfield',
         'options' => '',
         'value' => '',
-         'lexicon' => 'loopdbchunk:properties',
+        'lexicon' => 'loopdbchunk:properties',
     ),
     array(
         'name' => 'first',
@@ -111,7 +111,7 @@ $properties = array(
         'type' => 'textfield',
         'options' => '',
         'value' => '',
-         'lexicon' => 'loopdbchunk:properties',
+        'lexicon' => 'loopdbchunk:properties',
     ),
     array(
         'name' => 'last',
@@ -119,7 +119,7 @@ $properties = array(
         'type' => 'textfield',
         'options' => '',
         'value' => '',
-         'lexicon' => 'loopdbchunk:properties',
+        'lexicon' => 'loopdbchunk:properties',
     ),
     array(
         'name' => 'toPlaceholder',
@@ -127,7 +127,7 @@ $properties = array(
         'type' => 'textfield',
         'options' => '',
         'value' => '',
-         'lexicon' => 'loopdbchunk:properties',
+        'lexicon' => 'loopdbchunk:properties',
     ),
     array(
         'name' => 'debug',
@@ -135,7 +135,7 @@ $properties = array(
         'type' => 'combo-boolean',
         'options' => '',
         'value' => false,
-         'lexicon' => 'loopdbchunk:properties',
+        'lexicon' => 'loopdbchunk:properties',
     ),
 );
 

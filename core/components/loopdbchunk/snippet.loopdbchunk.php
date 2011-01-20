@@ -1,9 +1,10 @@
 <?php
+
 /**
  * loopDbChun
  *
- * packageName - The name of the folder that contains the xPDO model package.
- * modelPath - The path to the xPDO model package folder, relative to the core folder.
+ * package - The name of the folder that contains the xPDO model package.
+ * model - The path to the xPDO model package folder, relative to the core folder.
  * class - The xPDO model class  that represents a specific table.
  *
  * TEMPLATES
@@ -38,21 +39,18 @@
  * outputSeparator - (Opt) An optional string to separate each tpl instance [default="\n"]
  *
  */
-
-
-if(isset($packageName) and isset($modelPath)) {
-    $modx->addPackage($packageName,$modx->getOption('core_path').$modelPath);
+//print_r(get_defined_vars());
+if (isset($package) && isset($model)) {
+    $modx->addPackage($packageName, $modx->getOption('core_path') . $model);
 }
+if (!isset($class)) return '';
 
-if(!isset($class)) {
-    return('');
-}
 $output = array();
-$tpl = !empty($tpl) ? $tpl : ''; 
+$tpl = !empty($tpl) ? $tpl : '';
 $outputSeparator = isset($outputSeparator) ? $outputSeparator : "\n";
 $where = !empty($where) ? $modx->fromJSON($where) : array();
-$sortby = isset($sortby) ? $sortby : '';
-$sortdir = isset($sortdir) ? $sortdir : '';
+//$sortby = isset($sortby) ? $sortby : '';
+$sortdir = isset($sortdir) ? $sortdir : 'DESC';
 $limit = isset($limit) ? (integer) $limit : 5;
 $offset = isset($offset) ? (integer) $offset : 0;
 $totalVar = !empty($totalVar) ? $totalVar : 'total';
@@ -63,10 +61,12 @@ if (!empty($where)) {
     $criteria->where($where);
 }
 $total = $modx->getCount($class, $criteria);
-$modx->setPlaceholder($totalVar, $total);//getPage
+$modx->setPlaceholder($totalVar, $total); //getPage
 
-if (!empty($sortby)) $criteria->sortby($sortby, $sortdir);
-if (!empty($limit)) $criteria->limit($limit, $offset);
+if (isset($sortby))
+    $criteria->sortby($sortby, $sortdir);
+if (!empty($limit))
+    $criteria->limit($limit, $offset);
 
 if (!empty($debug)) {
     $criteria->prepare();
@@ -80,51 +80,61 @@ $first = empty($first) && $first !== '0' ? 1 : intval($first);
 $last = empty($last) ? (count($collection) + $idx - 1) : intval($last);
 
 /* include parseTpl */
-include_once $modx->getOption('loopdbchunk.core_path',null,$modx->getOption('core_path').'components/loopdbchunk/').'include.parsetpl.php';
+include_once $modx->getOption('loopdbchunk.core_path', null, $modx->getOption('core_path') . 'components/loopdbchunk/') . 'include.parsetpl.php';
 
-foreach ($collection as $row) {
+foreach ($collection as $key => $row) {
     $odd = ($idx & 1);
     $properties = array_merge(
-            $scriptProperties
-            ,array(
-            'idx' => $idx
-            ,'first' => $first
-            ,'last' => $last
-            )
-            ,$row->toArray()
+                    $scriptProperties
+                    , array(
+                'idx' => $idx
+                , 'first' => $first
+                , 'last' => $last
+                    )
+                    , $row->toArray()
     );
+
     $rowTpl = '';
     $tplidx = 'tpl_' . $idx;
 
-    if (!empty($$tplidx)) $rowTpl = parseTpl($$tplidx, $properties);
+    if (!empty($$tplidx))
+        $rowTpl = parseTpl($$tplidx, $properties);
     switch ($idx) {
         case $first:
-            if (!empty($tplFirst)) $rowTpl = parseTpl($tplFirst, $properties);
+            if (!empty($tplFirst))
+                $rowTpl = parseTpl($tplFirst, $properties);
             break;
         case $last:
-            if (!empty($tplLast)) $rowTpl = parseTpl($tplLast, $properties);
+            if (!empty($tplLast))
+                $rowTpl = parseTpl($tplLast, $properties);
             break;
     }
 
-    if ($odd && empty($rowTpl) && !empty($tplOdd)) $rowTpl = parseTpl($tplOdd, $properties);
-    if (!empty($tpl) && empty($rowTpl)) $rowTpl = parseTpl($tpl, $properties);
+    if ($odd && empty($rowTpl) && !empty($tplOdd))
+        $rowTpl = parseTpl($tplOdd, $properties);
+    if (!empty($tpl) && empty($rowTpl))
+        $rowTpl = parseTpl($tpl, $properties);
     if (empty($rowTpl)) {
         $chunk = $modx->newObject('modChunk');
         $chunk->setCacheable(false);
-        $output[]= $chunk->process(array(), '<pre>' . print_r($properties, true) .'</pre>');
+        $output[] = $chunk->process(array(), '<pre>' . print_r($properties, true) . '</pre>');
     } else {
-        $output[]= $rowTpl;
+        $output[] = $rowTpl;
     }
     $idx++;
+}
 
+/* output */
+$toSeparatePlaceholders = $modx->getOption('toSeparatePlaceholders', $scriptProperties, false);
+if (!empty($toSeparatePlaceholders)) {
+    $modx->setPlaceholders($output, $toSeparatePlaceholders);
+    return '';
 }
 
 $output = implode($outputSeparator, $output);
-$toPlaceholder = $modx->getOption('toPlaceholder',$scriptProperties,false);
+$toPlaceholder = $modx->getOption('toPlaceholder', $scriptProperties, false);
 if (!empty($toPlaceholder)) {
-    $modx->setPlaceholder($toPlaceholder,$output);
+    $modx->setPlaceholder($toPlaceholder, $output);
     return '';
 }
 return $output;
-
-?>

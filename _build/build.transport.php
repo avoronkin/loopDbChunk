@@ -1,12 +1,5 @@
 <?php
-/**
- * loopDbChunk
- *
- * @package loopDbChunk
- * @version 2.0
- * @release alpha
- * @author Alexander Voronkin <modx@elasticweb.ru>
- */
+
 $mtime = microtime();
 $mtime = explode(" ", $mtime);
 $mtime = $mtime[1] + $mtime[0];
@@ -33,7 +26,7 @@ $modx->setLogTarget(XPDO_CLI_MODE ? 'ECHO' : 'HTML');
 
 /* set package info */
 define('PKG_NAME','loopdbchunk');
-define('PKG_VERSION','2.0');
+define('PKG_VERSION','2.01');
 define('PKG_RELEASE','alpha');
 
 /* load builder */
