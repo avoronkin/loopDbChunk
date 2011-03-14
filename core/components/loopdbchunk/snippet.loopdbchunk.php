@@ -1,7 +1,6 @@
 <?php
-
 /**
- * loopDbChun
+ * loopDbChunk
  *
  * package - The name of the folder that contains the xPDO model package.
  * model - The path to the xPDO model package folder, relative to the core folder.
@@ -19,11 +18,14 @@
  * tplLast - (Opt) Name of a chunk serving as row template for the last row (see last
  * property)
  * tpl_{n} - (Opt) Name of a chunk serving as row template for the nth row
+ * outerTpl - wrapperTpl with placeholder [[+output]] for items
  *
  * SELECTION
  * where - (Opt) A JSON expression of criteria to build any additional where clauses from. An example would be
  * &where=`{{"alias:LIKE":"foo%", "OR:alias:LIKE":"%bar"},{"OR:pagetitle:=":"foobar", "AND:description:=":"raboof"}}`
- *
+ * ids - commaseperated list of ids
+ * idField - fieldname for idField if other than 'id'
+ * 
  * sortby - (Opt) Field to sort by
  * sortdir - (Opt) Order which to sort by [default=DESC]
  * limit - (Opt) Limits the number of resources returned [default=5]
@@ -37,14 +39,16 @@
  * last - (Opt) Define the idx which represents the last resource (see tplLast) [default=# of
  * resources being summarized + first - 1]
  * outputSeparator - (Opt) An optional string to separate each tpl instance [default="\n"]
+ * dbConnect - connect to foreign db, uses config.inc.php under core/components/package/config/
+ * 
  *
  */
 //print_r(get_defined_vars());
-if (isset($package) && isset($model)) {
-    $modx->addPackage($packageName, $modx->getOption('core_path') . $model);
-}
+
+
 if (!isset($class)) return '';
 
+$prefix=$scriptProperties['prefix'];
 $output = array();
 $tpl = !empty($tpl) ? $tpl : '';
 $outputSeparator = isset($outputSeparator) ? $outputSeparator : "\n";
@@ -54,13 +58,43 @@ $sortdir = isset($sortdir) ? $sortdir : 'DESC';
 $limit = isset($limit) ? (integer) $limit : 5;
 $offset = isset($offset) ? (integer) $offset : 0;
 $totalVar = !empty($totalVar) ? $totalVar : 'total';
+$ids = $modx->getOption('ids',$scriptProperties,'');
+$idField = $modx->getOption('idField',$scriptProperties,'id');
+$dbConnect = $modx->getOption('dbConnect',$scriptProperties,false);
 
-$criteria = $modx->newQuery($class);
+$package_path = 'components/'.$package.'/';  
+
+if ($dbConnect)
+{
+    include ($modx->getOption('core_path').$package_path.'config/config.inc.php');
+
+    $dsn = $database_type.':host='.$database_server.';dbname='.$dbase.';charset='.$database_connection_charset;
+    $xpdo = new xPDO($dsn, $database_user, $database_password);
+
+}
+else{
+	$xpdo= & $modx;
+}
+
+
+if (isset($package) && isset($model)) {
+    $xpdo->addPackage($package, $modx->getOption('core_path') . $model,$prefix);
+}
+
+
+$criteria = $xpdo->newQuery($class);
 
 if (!empty($where)) {
     $criteria->where($where);
 }
-$total = $modx->getCount($class, $criteria);
+
+
+if (!empty($ids)) {
+    $ids = explode(',',$ids);
+	$criteria->where(array($idField.':IN'=>$ids));
+}
+
+$total = $xpdo->getCount($class, $criteria);
 $modx->setPlaceholder($totalVar, $total); //getPage
 
 if (isset($sortby))
@@ -68,12 +102,14 @@ if (isset($sortby))
 if (!empty($limit))
     $criteria->limit($limit, $offset);
 
+
+
 if (!empty($debug)) {
     $criteria->prepare();
-    $modx->log(modX::LOG_LEVEL_ERROR, $criteria->toSQL());
+    echo $criteria->toSQL();
 }
 
-$collection = $modx->getCollection($class, $criteria);
+$collection = $xpdo->getCollection($class, $criteria);
 
 $idx = !empty($idx) ? intval($idx) : 1;
 $first = empty($first) && $first !== '0' ? 1 : intval($first);
@@ -83,7 +119,7 @@ $last = empty($last) ? (count($collection) + $idx - 1) : intval($last);
 include_once $modx->getOption('loopdbchunk.core_path', null, $modx->getOption('core_path') . 'components/loopdbchunk/') . 'include.parsetpl.php';
 
 foreach ($collection as $key => $row) {
-    $odd = ($idx & 1);
+	$odd = ($idx & 1);
     $properties = array_merge(
                     $scriptProperties
                     , array(
@@ -114,7 +150,7 @@ foreach ($collection as $key => $row) {
         $rowTpl = parseTpl($tplOdd, $properties);
     if (!empty($tpl) && empty($rowTpl))
         $rowTpl = parseTpl($tpl, $properties);
-    if (empty($rowTpl)) {
+    if (empty($tpl) && empty($rowTpl)) {
         $chunk = $modx->newObject('modChunk');
         $chunk->setCacheable(false);
         $output[] = $chunk->process(array(), '<pre>' . print_r($properties, true) . '</pre>');
@@ -131,10 +167,13 @@ if (!empty($toSeparatePlaceholders)) {
     return '';
 }
 
-$output = implode($outputSeparator, $output);
+if (!empty($outerTpl))
+   $o = parseTpl($outerTpl, array('output'=>implode($outputSeparator, $output)));
+else $o=implode($outputSeparator, $output);   
+
 $toPlaceholder = $modx->getOption('toPlaceholder', $scriptProperties, false);
 if (!empty($toPlaceholder)) {
-    $modx->setPlaceholder($toPlaceholder, $output);
+    $modx->setPlaceholder($toPlaceholder, $o);
     return '';
 }
-return $output;
+return $o;
