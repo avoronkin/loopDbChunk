@@ -6,7 +6,7 @@
  * package - The name of the folder that contains the xPDO model package.
  * model - The path to the xPDO model package folder, relative to the core folder.
  * class - The xPDO model class  that represents a specific table.
- * alias - Sets a SQL alias for the table. Optional.
+ * alias - (Opt)Sets a SQL alias for the table.
  *
  * TEMPLATES
  *
@@ -25,6 +25,7 @@
  * SELECTION
  * where - (Opt) A JSON expression of criteria to build any additional where clauses from. An example would be
  * &where=`{{"alias:LIKE":"foo%", "OR:alias:LIKE":"%bar"},{"OR:pagetitle:=":"foobar", "AND:description:=":"raboof"}}`
+ * columns - (Opt)commaseperated list of table columns. If not specified, all columns are selected.
  * ids - commaseperated list of ids
  * idField - fieldname for idField if other than 'id'
  * 
@@ -56,6 +57,7 @@ $alias = $modx->getOption('alias', $scriptProperties, $class);
 $output = array();
 $tpl = !empty($tpl) ? $tpl : '';
 $outputSeparator = isset($outputSeparator) ? $outputSeparator : "\n";
+
 $where = !empty($where) ? $modx->fromJSON($where) : array();
 //$sortby = isset($sortby) ? $sortby : '';
 $sortdir = isset($sortdir) ? $sortdir : 'DESC';
@@ -65,7 +67,13 @@ $totalVar = !empty($totalVar) ? $totalVar : 'total';
 $ids = $modx->getOption('ids', $scriptProperties, '');
 $idField = $modx->getOption('idField', $scriptProperties, 'id');
 $dbConnect = $modx->getOption('dbConnect', $scriptProperties, false);
-
+if (!empty($columns)) {
+    $columns = explode(',', $columns);
+    $columns[] = $idField;
+    if (count($columns) == 0) {
+        $columns = false;
+    }
+}
 $package_path = 'components/' . $package . '/';
 
 if ($dbConnect) {
@@ -84,6 +92,17 @@ if (isset($package) && isset($model)) {
 
 
 $criteria = $xpdo->newQuery($class);
+
+if ($columns) {
+    $fields = $xpdo->getFields($class);
+    $wrongcolumns = array_diff_key(array_flip($columns), $fields);
+    if (count($wrongcolumns) > 0) {
+        echo 'ERROR: wrong field in &columns - ' . implode(", ", array_flip($wrongcolumns));
+        return '';
+    } else {
+        $criteria->select($xpdo->getSelectColumns($class, $alias, '', $columns));
+    }
+}
 
 if ($alias) {
     $criteria->setClassAlias($alias);
