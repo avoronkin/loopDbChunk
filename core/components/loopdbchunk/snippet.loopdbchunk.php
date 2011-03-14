@@ -54,12 +54,10 @@ if (!isset($class))
 
 $prefix = $scriptProperties['prefix'];
 $alias = $modx->getOption('alias', $scriptProperties, $class);
-$output = array();
 $tpl = !empty($tpl) ? $tpl : '';
 $outputSeparator = isset($outputSeparator) ? $outputSeparator : "\n";
 
 $where = !empty($where) ? $modx->fromJSON($where) : array();
-//$sortby = isset($sortby) ? $sortby : '';
 $sortdir = isset($sortdir) ? $sortdir : 'DESC';
 $limit = isset($limit) ? (integer) $limit : 5;
 $offset = isset($offset) ? (integer) $offset : 0;
@@ -67,13 +65,6 @@ $totalVar = !empty($totalVar) ? $totalVar : 'total';
 $ids = $modx->getOption('ids', $scriptProperties, '');
 $idField = $modx->getOption('idField', $scriptProperties, 'id');
 $dbConnect = $modx->getOption('dbConnect', $scriptProperties, false);
-if (!empty($columns)) {
-    $columns = explode(',', $columns);
-    $columns[] = $idField;
-    if (count($columns) == 0) {
-        $columns = false;
-    }
-}
 $package_path = 'components/' . $package . '/';
 
 if ($dbConnect) {
@@ -90,28 +81,31 @@ if (isset($package) && isset($model)) {
     $xpdo->addPackage($package, $modx->getOption('core_path') . $model, $prefix);
 }
 
-
-$criteria = $xpdo->newQuery($class);
-
-if ($columns) {
-    $fields = $xpdo->getFields($class);
-    $wrongcolumns = array_diff_key(array_flip($columns), $fields);
-    if (count($wrongcolumns) > 0) {
-        echo 'ERROR: wrong field in &columns - ' . implode(", ", array_flip($wrongcolumns));
-        return '';
-    } else {
-        $criteria->select($xpdo->getSelectColumns($class, $alias, '', $columns));
+if (!empty($columns)) {
+    $columns = explode(',', $columns);
+    $columns[] = $idField; // include the Primary Key of the table
+    foreach ($columns as $key => $value) {//add alias
+        if (strpos($value, '.') == false) {
+            unset($columns[$key]);
+            $columns[$key] = $alias . '.' . $value;
+        }
     }
 }
 
-if ($alias) {
-    $criteria->setClassAlias($alias);
+$criteria = $xpdo->newQuery($class);
+
+if (is_array($columns)) {
+    $criteria->select($columns);
 }
+
+$criteria->setClassAlias($alias);
+
 
 if (!empty($ids)) {
     $ids = explode(',', $ids);
     $where = array_merge($where, array($alias . '.' . $idField . ':IN' => $ids));
 }
+
 if (count($where) > 0) {
     foreach ($where as $key => $value) {
         if (strpos($key, '.') == false) {
@@ -125,14 +119,32 @@ if (count($where) > 0) {
 $total = $xpdo->getCount($class, $criteria);
 $modx->setPlaceholder($totalVar, $total); //getPage
 
-if (isset($sortby)) {
-    $criteria->sortby($alias . '.' . $sortby, $sortdir);
+
+if (!empty($sortby)) {
+    if (strpos($sortby, '.') == false) {
+        $sortby = $alias . '.' . $sortby;
+    }
+    $criteria->sortby($sortby, $sortdir);
 }
+
+if (!empty($orderby)) {
+    $inputs = explode(',', $orderby);
+    foreach ($inputs as $input) {
+        $input = trim($input);
+        $position = strrpos($input, ' ');
+        $sortby = substr($input, 0, $position);
+        if (strpos($sortby, '.') == false) {
+            $sortby = $alias . '.' . $sortby;
+        }
+        $sortdir = trim(substr($input, $position));
+
+        $criteria->sortby($sortby, $sortdir);
+    }
+}
+
 if (!empty($limit)) {
     $criteria->limit($limit, $offset);
 }
-
-
 
 if (!empty($debug)) {
     $criteria->prepare();
