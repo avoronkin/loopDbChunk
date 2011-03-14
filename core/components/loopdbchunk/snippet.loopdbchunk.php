@@ -1,10 +1,12 @@
 <?php
+
 /**
  * loopDbChunk
  *
  * package - The name of the folder that contains the xPDO model package.
  * model - The path to the xPDO model package folder, relative to the core folder.
  * class - The xPDO model class  that represents a specific table.
+ * alias - Sets a SQL alias for the table. Optional.
  *
  * TEMPLATES
  *
@@ -46,9 +48,11 @@
 //print_r(get_defined_vars());
 
 
-if (!isset($class)) return '';
+if (!isset($class))
+    return '';
 
-$prefix=$scriptProperties['prefix'];
+$prefix = $scriptProperties['prefix'];
+$alias = $modx->getOption('alias', $scriptProperties, $class);
 $output = array();
 $tpl = !empty($tpl) ? $tpl : '';
 $outputSeparator = isset($outputSeparator) ? $outputSeparator : "\n";
@@ -58,49 +62,56 @@ $sortdir = isset($sortdir) ? $sortdir : 'DESC';
 $limit = isset($limit) ? (integer) $limit : 5;
 $offset = isset($offset) ? (integer) $offset : 0;
 $totalVar = !empty($totalVar) ? $totalVar : 'total';
-$ids = $modx->getOption('ids',$scriptProperties,'');
-$idField = $modx->getOption('idField',$scriptProperties,'id');
-$dbConnect = $modx->getOption('dbConnect',$scriptProperties,false);
+$ids = $modx->getOption('ids', $scriptProperties, '');
+$idField = $modx->getOption('idField', $scriptProperties, 'id');
+$dbConnect = $modx->getOption('dbConnect', $scriptProperties, false);
 
-$package_path = 'components/'.$package.'/';  
+$package_path = 'components/' . $package . '/';
 
-if ($dbConnect)
-{
-    include ($modx->getOption('core_path').$package_path.'config/config.inc.php');
+if ($dbConnect) {
+    include ($modx->getOption('core_path') . $package_path . 'config/config.inc.php');
 
-    $dsn = $database_type.':host='.$database_server.';dbname='.$dbase.';charset='.$database_connection_charset;
+    $dsn = $database_type . ':host=' . $database_server . ';dbname=' . $dbase . ';charset=' . $database_connection_charset;
     $xpdo = new xPDO($dsn, $database_user, $database_password);
-
-}
-else{
-	$xpdo= & $modx;
+} else {
+    $xpdo = & $modx;
 }
 
 
 if (isset($package) && isset($model)) {
-    $xpdo->addPackage($package, $modx->getOption('core_path') . $model,$prefix);
+    $xpdo->addPackage($package, $modx->getOption('core_path') . $model, $prefix);
 }
 
 
 $criteria = $xpdo->newQuery($class);
 
-if (!empty($where)) {
-    $criteria->where($where);
+if ($alias) {
+    $criteria->setClassAlias($alias);
 }
 
-
 if (!empty($ids)) {
-    $ids = explode(',',$ids);
-	$criteria->where(array($idField.':IN'=>$ids));
+    $ids = explode(',', $ids);
+    $where = array_merge($where, array($alias . '.' . $idField . ':IN' => $ids));
+}
+if (count($where) > 0) {
+    foreach ($where as $key => $value) {
+        if (strpos($key, '.') == false) {
+            $where[$alias . '.' . $key] = $value;
+            unset($where[$key]);
+        }
+    }
+    $criteria->where($where);
 }
 
 $total = $xpdo->getCount($class, $criteria);
 $modx->setPlaceholder($totalVar, $total); //getPage
 
-if (isset($sortby))
-    $criteria->sortby($sortby, $sortdir);
-if (!empty($limit))
+if (isset($sortby)) {
+    $criteria->sortby($alias . '.' . $sortby, $sortdir);
+}
+if (!empty($limit)) {
     $criteria->limit($limit, $offset);
+}
 
 
 
@@ -119,7 +130,7 @@ $last = empty($last) ? (count($collection) + $idx - 1) : intval($last);
 include_once $modx->getOption('loopdbchunk.core_path', null, $modx->getOption('core_path') . 'components/loopdbchunk/') . 'include.parsetpl.php';
 
 foreach ($collection as $key => $row) {
-	$odd = ($idx & 1);
+    $odd = ($idx & 1);
     $properties = array_merge(
                     $scriptProperties
                     , array(
@@ -168,8 +179,9 @@ if (!empty($toSeparatePlaceholders)) {
 }
 
 if (!empty($outerTpl))
-   $o = parseTpl($outerTpl, array('output'=>implode($outputSeparator, $output)));
-else $o=implode($outputSeparator, $output);   
+    $o = parseTpl($outerTpl, array('output' => implode($outputSeparator, $output)));
+else
+    $o=implode($outputSeparator, $output);
 
 $toPlaceholder = $modx->getOption('toPlaceholder', $scriptProperties, false);
 if (!empty($toPlaceholder)) {
