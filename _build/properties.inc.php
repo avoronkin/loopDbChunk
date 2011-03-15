@@ -7,6 +7,14 @@
  */
 $properties = array(
     array(
+        'name' => 'dbConnect',
+        'desc' => 'prop_loopdbchunk.dbconnect_desc',
+        'type' => 'combo-boolean',
+        'options' => '',
+        'value' => false,
+        'lexicon' => 'loopdbchunk:properties',
+    ),
+    array(
         'name' => 'package',
         'desc' => 'prop_loopdbchunk.package_name_desc',
         'type' => 'textfield',
@@ -25,6 +33,38 @@ $properties = array(
     array(
         'name' => 'class',
         'desc' => 'prop_loopdbchunk.class_desc',
+        'type' => 'textfield',
+        'options' => '',
+        'value' => '',
+        'lexicon' => 'loopdbchunk:properties',
+    ),
+    array(
+        'name' => 'alias',
+        'desc' => 'prop_loopdbchunk.alias_desc',
+        'type' => 'textfield',
+        'options' => '',
+        'value' => '',
+        'lexicon' => 'loopdbchunk:properties',
+    ),
+    array(
+        'name' => 'select',
+        'desc' => 'prop_loopdbchunk.select_desc',
+        'type' => 'textfield',
+        'options' => '',
+        'value' => '',
+        'lexicon' => 'loopdbchunk:properties',
+    ),
+    array(
+        'name' => 'where',
+        'desc' => 'prop_loopdbchunk.where_desc',
+        'type' => 'textfield',
+        'options' => '',
+        'value' => '',
+        'lexicon' => 'loopdbchunk:properties',
+    ),
+    array(
+        'name' => 'outerTpl',
+        'desc' => 'prop_loopdbchunk.outertpl_desc',
         'type' => 'textfield',
         'options' => '',
         'value' => '',
@@ -62,14 +102,14 @@ $properties = array(
         'value' => '',
         'lexicon' => 'loopdbchunk:properties',
     ),
-  /*  array(
+    array(
         'name' => 'sortby',
         'desc' => 'prop_loopdbchunk.sortby_desc',
         'type' => 'textfield',
         'options' => '',
         'value' => '',
         'lexicon' => 'loopdbchunk:properties',
-    ),*/
+    ),
     array(
         'name' => 'sortdir',
         'desc' => 'prop_loopdbchunk.sortdir_desc',
@@ -79,6 +119,14 @@ $properties = array(
             array('text' => 'DESC','value' => 'DESC'),
         ),
         'value' => 'DESC',
+        'lexicon' => 'loopdbchunk:properties',
+    ),
+       array(
+        'name' => 'orderby',
+        'desc' => 'prop_loopdbchunk.orderby_desc',
+        'type' => 'textfield',
+        'options' => '',
+        'value' => '',
         'lexicon' => 'loopdbchunk:properties',
     ),
     array(

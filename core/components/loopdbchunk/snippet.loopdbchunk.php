@@ -25,12 +25,13 @@
  * SELECTION
  * where - (Opt) A JSON expression of criteria to build any additional where clauses from. An example would be
  * &where=`{{"alias:LIKE":"foo%", "OR:alias:LIKE":"%bar"},{"OR:pagetitle:=":"foobar", "AND:description:=":"raboof"}}`
- * columns - (Opt)commaseperated list of table columns. If not specified, all columns are selected.
+ * select - (Opt)commaseperated list of table columns. If not specified, all columns are selected.
  * ids - commaseperated list of ids
  * idField - fieldname for idField if other than 'id'
  * 
  * sortby - (Opt) Field to sort by
  * sortdir - (Opt) Order which to sort by [default=DESC]
+ * orderby - (Opt) Sorting by multiple fields. For example &orderby = `parent ASC, id DESC`
  * limit - (Opt) Limits the number of resources returned [default=5]
  * offset - (Opt) An offset of resources returned by the criteria to skip [default=0]
  *
@@ -48,15 +49,15 @@
  */
 //print_r(get_defined_vars());
 
-
-if (!isset($class))
+//&class
+if (empty($class)) {
     return '';
+}
 
 $prefix = $scriptProperties['prefix'];
 $alias = $modx->getOption('alias', $scriptProperties, $class);
 $tpl = !empty($tpl) ? $tpl : '';
 $outputSeparator = isset($outputSeparator) ? $outputSeparator : "\n";
-
 $where = !empty($where) ? $modx->fromJSON($where) : array();
 $sortdir = isset($sortdir) ? $sortdir : 'DESC';
 $limit = isset($limit) ? (integer) $limit : 5;
@@ -67,6 +68,7 @@ $idField = $modx->getOption('idField', $scriptProperties, 'id');
 $dbConnect = $modx->getOption('dbConnect', $scriptProperties, false);
 $package_path = 'components/' . $package . '/';
 
+//&dbConnect,&package
 if ($dbConnect) {
     include ($modx->getOption('core_path') . $package_path . 'config/config.inc.php');
 
@@ -76,15 +78,21 @@ if ($dbConnect) {
     $xpdo = & $modx;
 }
 
-
-if (isset($package) && isset($model)) {
-    $xpdo->addPackage($package, $modx->getOption('core_path') . $model, $prefix);
+//&package,&model,&prefix
+if (is_string($package) && !empty($package)) {
+    if (is_string($model) && !empty($model)) {
+        $xpdo->addPackage($package, $modx->getOption('core_path') . $model, $prefix);
+    }
 }
 
-if (!empty($columns)) {
-    $columns = explode(',', $columns);
+
+$query = $xpdo->newQuery($class);
+
+//&select
+if (!empty($select)) {
+    $columns = explode(',', $select);
     $columns[] = $idField; // include the Primary Key of the table
-    foreach ($columns as $key => $value) {//add alias
+    foreach ($columns as $key => $value) {//add alias, if not specified
         if (strpos($value, '.') == false) {
             unset($columns[$key]);
             $columns[$key] = $alias . '.' . $value;
@@ -92,66 +100,70 @@ if (!empty($columns)) {
     }
 }
 
-$criteria = $xpdo->newQuery($class);
-
 if (is_array($columns)) {
-    $criteria->select($columns);
+    $query->select($columns);
 }
 
-$criteria->setClassAlias($alias);
+//&alias
+$query->setClassAlias($alias);
 
-
+//&ids + &idField
 if (!empty($ids)) {
     $ids = explode(',', $ids);
     $where = array_merge($where, array($alias . '.' . $idField . ':IN' => $ids));
 }
 
+//&where
 if (count($where) > 0) {
     foreach ($where as $key => $value) {
-        if (strpos($key, '.') == false) {
+        if (strpos($key, '.') == false) {//add alias, if not specified
             $where[$alias . '.' . $key] = $value;
             unset($where[$key]);
         }
     }
-    $criteria->where($where);
+    $query->where($where);
 }
 
-$total = $xpdo->getCount($class, $criteria);
-$modx->setPlaceholder($totalVar, $total); //getPage
+//set "total" placeholder for getPage
+$total = $xpdo->getCount($class, $query);
+$modx->setPlaceholder($totalVar, $total); 
 
-
+//&sortby + &sortdir
 if (!empty($sortby)) {
-    if (strpos($sortby, '.') == false) {
+    if (strpos($sortby, '.') == false) {//add alias, if not specified
         $sortby = $alias . '.' . $sortby;
     }
-    $criteria->sortby($sortby, $sortdir);
+    $query->sortby($sortby, $sortdir);
 }
 
+//&orderby
 if (!empty($orderby)) {
     $inputs = explode(',', $orderby);
     foreach ($inputs as $input) {
         $input = trim($input);
         $position = strrpos($input, ' ');
         $sortby = substr($input, 0, $position);
-        if (strpos($sortby, '.') == false) {
+        if (strpos($sortby, '.') == false) {//add alias, if not specified
             $sortby = $alias . '.' . $sortby;
         }
         $sortdir = trim(substr($input, $position));
 
-        $criteria->sortby($sortby, $sortdir);
+        $query->sortby($sortby, $sortdir);
     }
 }
 
+//&limit, &offset
 if (!empty($limit)) {
-    $criteria->limit($limit, $offset);
+    $query->limit($limit, $offset);
 }
 
+//&debug
 if (!empty($debug)) {
-    $criteria->prepare();
-    echo $criteria->toSQL();
+    $query->prepare();
+    echo $query->toSQL();
 }
 
-$collection = $xpdo->getCollection($class, $criteria);
+$collection = $xpdo->getCollection($class, $query);
 
 $idx = !empty($idx) ? intval($idx) : 1;
 $first = empty($first) && $first !== '0' ? 1 : intval($first);

@@ -1,3 +1,10 @@
 Changelog for loopDbChunk.
 
+2.2.1
+new properties: alias, select, orderby
+
+2.1.0
+new properties: dbConnect, ids, idField, outerTpl
+Thanks to Bruno17(https://github.com/Bruno17)!
+
 
